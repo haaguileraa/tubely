@@ -128,14 +128,23 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	videoURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.s3Bucket, cfg.s3Region, keyStr)
+	videoURL := cfg.getURLWithKey(keyStr)
 	video.VideoURL = &videoURL
 	err = cfg.db.UpdateVideo(video)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not update video", err)
 		return
 	}
+	
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not signed video", err)
+		return
+	}
 	respondWithJSON(w, http.StatusOK, video)
+}
+
+func (cfg *apiConfig) getURLWithKey(key string) string {
+	return  fmt.Sprintf("https://%s/%s", cfg.s3CfDistribution, key) 
 }
 
 func getPrefixForAspectRatio(aspectRatio string) string {
